@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Stack Orphans</title>
+    <meta name="description" content="Need a new hobby? Answer old unanswered questions on Stack Overflow">
+    <meta property="og:title" content="Stack Orphans" />
+    <meta property="og:description" content="Need a new hobby? Answer old unanswered questions on Stack Overflow">
+    <meta property="og:url" content="https://stackorphans.tsak.net/" />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://stackorphans.tsak.net/visual.png">
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:site" content="@__tsak__" />
+    <meta name="twitter:creator" content="@__tsak__" />
+    <link rel="apple-touch-icon" sizes="57x57" href="/apple-icon-57x57.png">
+    <link rel="apple-touch-icon" sizes="60x60" href="/apple-icon-60x60.png">
+    <link rel="apple-touch-icon" sizes="72x72" href="/apple-icon-72x72.png">
+    <link rel="apple-touch-icon" sizes="76x76" href="/apple-icon-76x76.png">
+    <link rel="apple-touch-icon" sizes="114x114" href="/apple-icon-114x114.png">
+    <link rel="apple-touch-icon" sizes="120x120" href="/apple-icon-120x120.png">
+    <link rel="apple-touch-icon" sizes="144x144" href="/apple-icon-144x144.png">
+    <link rel="apple-touch-icon" sizes="152x152" href="/apple-icon-152x152.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-icon-180x180.png">
+    <link rel="icon" type="image/png" sizes="192x192"  href="/android-icon-192x192.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/manifest.json">
+    <meta name="msapplication-TileColor" content="#ffffff">
+    <meta name="msapplication-TileImage" content="/ms-icon-144x144.png">
+    <meta name="theme-color" content="#ffffff">
+    <script src="moment.min.js"></script>
+    <style>
+        body {
+            font-family: sans-serif;
+        }
+
+        @keyframes blinker {
+            50% {
+                opacity: 0;
+            }
+        }
+
+        #loading {
+            animation: blinker 1s linear infinite;
+        }
+    </style>
+</head>
+<body>
+<h1>Answer long forgotten Stack Overflow questions</h1>
+<p>
+    <label for="tags">Filter by</label>
+    <input type="text" name="tags" id="tags" placeholder="Tags, e.g. go; html; php">
+    <button id="filter">Go</button>
+</p>
+<div id="loading" style="text-decoration: blink;">Loading...</div>
+<div id="questions">
+</div>
+</body>
+<script>
+    let $filter = document.getElementById('filter');
+    $filter.onclick = function() {
+       search();
+    };
+
+    let search = function () {
+        let $loading = document.getElementById('loading');
+        $loading.style.display = 'block';
+
+        let $tags = document.getElementById('tags').value;
+        let url = 'https://api.stackexchange.com/2.2/questions/no-answers?order=asc&sort=creation&tagged=' + encodeURIComponent($tags) + '&site=stackoverflow';
+
+        let $questions = document.getElementById('questions');
+        while ($questions.firstChild) {
+            $questions.removeChild($questions.firstChild);
+        }
+
+        fetch(url)
+            .catch(function(error) {
+                console.error(error);
+                $loading.style.display = 'none';
+            })
+            .then(function (response) {
+                return response.json();
+            })
+            .then(function (data) {
+                $loading.style.display = 'none';
+                if (data.items) {
+                    data.items.forEach(function (item) {
+                        let container = document.createElement('p');
+                        let link = document.createElement('a');
+                        link.innerText = item.title;
+                        link.href = item.link;
+                        link.target = '_blank';
+                        container.appendChild(link);
+
+                        let date = document.createElement('span');
+                        date.innerText = ' asked ' + moment(item.creation_date * 1000).fromNow() + ' by ' + item.owner.display_name;
+                        container.appendChild(date);
+
+                        $questions.appendChild(container);
+                    });
+                }
+            });
+    };
+
+    search();
+</script>
+</html>
